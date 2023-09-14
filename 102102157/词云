@@ -1,0 +1,25 @@
+# import jieba
+import wordcloud
+import matplotlib.pyplot as plt;
+
+f=open(r'C:/Users/李波/PycharmProjects/pythonProject/venv/barrage.txt',mode='r',encoding='utf-8')
+text=f.read()
+
+# # 词云图的设计
+img = plt.imread(r"D:\love.jpg")
+#绘制词云
+wc=wordcloud.WordCloud(
+    background_color='white',  # 设置背景颜色
+    mask=img,  # 背景图片
+    max_words=200,  # 设置最大显示的词数
+    # stopwords=STOPWORDS,  # 设置停用词
+    # 设置字体格式，字体格式 .ttf文件需自己网上下载，最好将名字改为英文，中文名路径加载可能会出现问题。
+    font_path='simhei.ttf',
+    max_font_size=100,  # 设置字体最大值
+    random_state=50,  # 设置随机生成状态，即多少种配色方案
+    ##提高清晰度
+    width=300,height=500,
+    min_font_size=20,
+)
+wc.generate(text)
+wc.to_file('out.png')
