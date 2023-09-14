@@ -1,0 +1,20 @@
+import requests
+import json
+import re
+#使用get_barrage（）函数获取视频弹幕
+def get_barrage(bvid,headers):
+    url = "https://api.bilibili.com/x/web-interface/view?bvid=" + bvid
+    req = requests.get(url, headers=headers)
+    res = json.loads(req.text)
+    cid = res['data']['cid']#从视频信息中提取弹幕的cid。
+
+    barrage_url = "https://comment.bilibili.com/" + str(cid) + ".xml"
+    barrage_req = requests.get(barrage_url, headers=headers) #发送GET请求，获取弹幕的响应。
+    barrage_req.encoding = 'utf-8'
+    barrage_list = re.findall('<d p=".*?">(.*?)</d>',barrage_req.text) #使用正则表达式，从弹幕响应的文本中提取每一条弹幕的内容，并将它们存储在列表barrage_list中。
+    for index in barrage_list:
+        with open('barrage.txt', mode='a', encoding='utf-8') as f:
+            f.write(index)
+            f.write("\n")
+            print(index)
+    return barrage_list
