@@ -1,0 +1,65 @@
+import openpyxl
+import pandas as pd
+import matplotlib.pyplot as plt
+
+count_dict = {}
+#这个函数用于统计弹幕的数量，并将结果存储在字典count_dict中。它遍历弹幕列表，如果弹幕在字典中已存在，则增加对应的计数；如果不存在，则添加该弹幕并设置计数为1。最后返回统计结果。
+def count_barrages(barrages):
+
+    for barrage in barrages:
+        if barrage in count_dict:
+            count_dict[barrage] += 1
+        else:
+            count_dict[barrage] = 1
+    return count_dict
+#这个函数用于将统计结果写入Excel表格。它创建一个Workbook对象，设置表格的标题和列名，然后遍历count_dict中的每个弹幕及其数量，将其写入表格的相应单元格。最后保存Excel文件，并打印成功写入的提示信息。
+def write_to_excel(count_dict, filename):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "弹幕统计"
+    sheet['A1'] = "弹幕内容"
+    sheet['B1'] = "数量"
+
+    row = 2
+    for barrage, count in count_dict.items():
+        sheet.cell(row=row, column=1).value = barrage
+        sheet.cell(row=row, column=2).value = count
+        row += 1
+
+    workbook.save(filename)
+    print(f"数据已成功写入到 {filename}")
+
+# 读取弹幕文件
+danmuku_df = pd.read_csv('C:/Users/李波/PycharmProjects/pythonProject/venv/barrage.txt', usecols=[0])
+
+# 统计每种弹幕的数量
+danmuku_counts = danmuku_df.iloc[:, 0].value_counts()
+
+# 按弹幕数量降序排序
+danmuku_counts_sorted = danmuku_counts.sort_values(ascending=False)
+
+# 输出数量排名前20的弹幕
+top_20_danmuku = danmuku_counts_sorted.head(20)
+print(top_20_danmuku)
+
+# 将统计数据写入Excel表格
+write_to_excel(top_20_danmuku,"barrages.xlsx")
+# 设置中文显示
+plt.rcParams['font.sans-serif'] = ['SimHei']
+
+# 创建画布和子图
+fig, ax = plt.subplots()
+
+# 绘制条形图
+ax.bar(top_20_danmuku.index, top_20_danmuku.values)
+
+# 设置标题和标签
+ax.set_title("弹幕数量排名前20")
+ax.set_xlabel("弹幕内容")
+ax.set_ylabel("数量")
+
+# 自动调整x轴刻度标签的旋转角度，避免重叠
+plt.xticks(rotation=45, ha='right')
+
+# 显示图形
+plt.show()
