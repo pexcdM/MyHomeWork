@@ -1,0 +1,178 @@
+import random
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+class DiceGame:
+    def __init__(self, master):
+        self.master = master
+        master.title("Dice Game")
+
+        # 添加控件
+        self.mode_label = tk.Label(master, text="游戏模式：")
+        self.mode_label.grid(row=0, column=0)
+        self.mode_entry = tk.Entry(master)
+        self.mode_entry.grid(row=0, column=1)
+
+        self.rounds_label = tk.Label(master, text="游戏局数：")
+        self.rounds_label.grid(row=1, column=0)
+        self.rounds_entry = tk.Entry(master)
+        self.rounds_entry.grid(row=1, column=1)
+
+        self.chips_label = tk.Label(master, text="玩家筹码数：")
+        self.chips_label.grid(row=2, column=0)
+        self.chips_entry = tk.Entry(master)
+        self.chips_entry.grid(row=2, column=1)
+
+        self.start_button = tk.Button(master, text="开始游戏", command=self.start_game)
+        self.start_button.grid(row=3, column=0, columnspan=2)
+
+        self.log_text = tk.Text(master, height=20, width=50)
+        self.log_text.grid(row=4, column=0, columnspan=2)
+
+        self.fig = Figure(figsize=(4, 4))
+        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
+        self.canvas.get_tk_widget().grid(row=5, column=0, columnspan=2)
+
+        # 初始化变量
+        self.game_mode = None
+        self.num_rounds = None
+        self.num_chips = None
+        self.bonus_points = {
+            "double_pair": 10,
+            "three_straight": 10,
+            "full_house": 20,
+            "four_straight": 40,
+            "five_straight": 100,
+            "small_straight": 30,
+            "big_straight": 60
+        }
+
+    def start_game(self):
+        # 获取输入值
+        self.game_mode = self.mode_entry.get()
+        self.num_rounds = int(self.rounds_entry.get())
+        self.num_chips = int(self.chips_entry.get())
+
+        # 判断输入是否合法
+        if self.game_mode not in ["2", "3", "4"]:
+            self.log_text.insert(tk.END, "游戏模式输入错误！\n")
+            return
+
+        # 开始游戏
+        self.log_text.delete("1.0", tk.END)
+        for i in range(self.num_rounds):
+            self.log_text.insert(tk.END, "第{}轮游戏开始！\n".format(i + 1))
+            players = {input("请输入玩家{}的名字：".format(n + 1)): [self.num_chips] for n in range(int(self.game_mode))}
+
+            for j in range(3):
+                self.log_text.insert(tk.END, "第{}轮投掷开始！\n".format(j + 1))
+                for player in players:
+                    dice = [random.randint(1, 6) for _ in range(5)]
+                    self.show_dice(dice)  # 显示骰子
+                    self.log_text.insert(tk.END, "{}投掷的骰子为：{}\n".format(player, dice))
+                    if j != 2:
+                        lock_dice = input("请输入要锁定的骰子编号（空格分隔），无需锁定请按回车：")
+                        if lock_dice:
+                            lock_dice = lock_dice.split(" ")
+                            dice = [dice[i - 1] for i in range(1, 6) if str(i) in lock_dice] + [0] * (
+                                5 - len(lock_dice))  # 保留锁定的骰子
+                            self.log_text.insert(tk.END, "{}选择锁定的骰子为：{}\n".format(player, dice))
+                        players[player] = dice
+
+                if j != 2:
+                    for player in players:
+                        while True:
+                            multiplier = input("{}请选择倍率（0-3）：".format(player))
+                            if multiplier.isdigit() and int(multiplier) in [0, 1, 2, 3]:
+                                score = sum(players[player])
+                                if score == 15:
+                                    self.log_text.insert(tk.END, "{}获得了双对！得分加上10分！\n".format(player))
+                                    score += self.bonus_points["double_pair"]
+                                elif score in [3, 6, 9, 12, 15]:
+                                    self.log_text.insert(tk.END, "{}获得了三连！得分加上10分！\n".format(player))
+                                    score += self.bonus_points["three_straight"]
+                                elif sorted(players[player]) in [
+                                    [1, 2, 3, 4],
+                                    [2, 3, 4, 5],
+                                    [3, 4, 5, 6]
+                                ]:
+                                    self.log_text.insert(tk.END, "{}获得了小顺子！得分加上30分！\n".format(player))
+                                    score += self.bonus_points["small_straight"]
+                                elif sorted(players[player]) in [
+                                    [1, 2, 3, 4, 5],
+                                    [2, 3, 4, 5, 6]
+                                ]:
+                                    self.log_text.insert(tk.END, "{}获得了大顺子！得分加上60分！\n".format(player))
+                                    score += self.bonus_points["big_straight"]
+                                elif len(set(players[player])) == 2 and players[player].count(0) != 1:
+                                    self.log_text.insert(tk.END, "{}获得了葫芦！得分加上20分！\n".format(player))
+                                    score += self.bonus_points["full_house"]
+                                elif sorted(players[player]) in [
+                                    [1, 2, 3, 4, 5],
+                                    [2, 3, 4, 5, 6]
+                                ]:
+                                    self.log_text.insert(tk.END, "{}获得了五连！得分加上100分！\n".format(player))
+                                    score += self.bonus_points["five_straight"]
+                                elif len(set(players[player])) == 4 and players[player].count(0) != 2:
+                                    self.log_text.insert(tk.END, "{}获得了四连！得分加上40分！\n".format(player))
+                                    score += self.bonus_points["four_straight"]
+                                base_score = 0  # 设置基础得分
+                                players[player] = [score + base_score]
+                                break
+                            else:
+                                self.log_text.insert(tk.END, "请输入有效的倍率！\n")
+
+            # 计算得分并划分筹码
+            scores = {player: sum(players[player]) for player in players}
+            max_score = max(scores.values())
+            winners = [player for player in scores if scores[player] == max_score]
+            multipliers = {player: int(input("{}请选择倍率（1-3）：".format(player))) for player in winners}
+
+            if len(winners) == 1:
+                total_scores = sum(sum(score_list) for score_list in players.values())
+                prize_chips = total_scores - self.num_chips
+            else:
+                prize_chips = abs(max_score - min(scores.values())) * sum(
+                    int(multipliers[player]) for player in multipliers)
+
+                prize_chips //= len(winners)
+
+            for winner in winners:
+                players[winner][0] += prize_chips
+
+            self.log_text.insert(tk.END, "Prize chips: {}\n".format(prize_chips))
+
+            # 判断是否有玩家输光了
+            for player in players:
+                if players[player][0] <= 0:
+                    self.log_text.insert(tk.END, "{}筹码数为0，被击飞！游戏结束！\n                    本轮游戏得分如下：\n".format(player))
+                    for i, score in enumerate(players[player]):
+                        self.log_text.insert(tk.END, "投掷{}次得分为{}，".format(i + 1, score))
+                        if i == 2 or score == 0:
+                            self.log_text.insert(tk.END, "\n")
+
+            # 显示最终得分
+            self.log_text.insert(tk.END, "第{}轮游戏结束！\n".format(i + 1))
+            self.log_text.insert(tk.END, "最终得分如下：\n")
+            for player in players:
+                self.log_text.insert(tk.END, "{}：{} chips\n".format(player, players[player][0]))
+
+    def show_dice(self, dice):
+        self.fig.clear()
+        ax = self.fig.add_subplot(111)
+        x = range(1, 7)  # 修改这里，使 x 值包含 1 到 6
+        y = [dice.count(i) for i in x]
+        ax.bar(x, y)
+        ax.set_xticks([1, 2, 3, 4, 5, 6])  # 修改这里，设置 x 轴刻度
+        ax.set_ylim(0, 5)
+        self.canvas.draw()
+
+
+root = tk.Tk()
+game = DiceGame(root)
+root.mainloop()
+
+
+
+
