@@ -1,1 +1,144 @@
 
+from tkinter import *
+import tkinter as tk
+from PIL import ImageTk, Image
+from tkinter import messagebox
+import pygame
+
+
+def play_background_music():
+    pygame.mixer.init()
+    pygame.mixer.music.load("./music/TheRightPath.mp3")
+    pygame.mixer.music.play(-1)  # -1表示循环播放
+
+
+def get_img(filename, width, height):
+    im = Image.open(filename).resize((width, height))
+    im = ImageTk.PhotoImage(im)
+    return im
+
+
+def show_rule():
+    rule_text = '''
+    游戏规则：
+    进入游戏，选择游戏模式后，设置游戏局数和玩家个人筹码数
+    每一局游戏内有三轮投掷机会，玩家一人一次轮流投掷骰子，每个玩家有5个骰子
+    前两次投掷骰子之后可以选择锁定0~5个骰子，锁定的骰子位于选定区域不再改变
+    前两轮每轮投掷结束并在所有玩家锁定骰子后，每位玩家可以选择增加倍率：0，1，2，3。选择完成后进入下一轮。
+    第三轮投掷结束后，所有玩家的全部骰子自动锁定并进行计分（得分为五个骰子的点数总和+奖励分），得出最终结果，筹码划分。
+    结算规则：
+    分数最高的玩家从所有其它玩家手里赢得（二人分差的绝对值）*（总倍率）的筹码。
+    N局游戏后，筹码最多的玩家获胜。
+    如若中途有玩家筹码小于等于0，则该玩家被击飞，游戏直接结束（都没了的意思哦）。
+    祝您玩得愉快！
+    '''
+
+    rule_window = Toplevel()
+    rule_window.title("游戏规则")
+    rule_window.geometry("400x300")
+
+    text_area = Text(rule_window, font=("Microsoft YaHei", 12))
+    text_area.pack(pady=20)
+    text_area.insert(END, rule_text)
+
+    close_button = Button(rule_window, text="关闭", font=("Microsoft YaHei", 12), command=rule_window.destroy)
+    close_button.pack(pady=10)
+
+
+def login():
+    global entry_username, entry_password
+    username = entry_username.get()
+    password = entry_password.get()
+    if username == 'k' and password == '123456':
+        answer = messagebox.askyesno('登录成功', '登录成功！是否跳转到主界面？')
+        if answer:
+            # 这里执行跳转到其他界面的操作
+            root_login.destroy()  # 关闭登录窗口
+            main_window = Tk()  # 打开游戏主窗口
+            main_window.geometry('499x1080+180+100')
+            main_window.resizable(False, False)
+
+            # 设置背景图片
+            canvas_root = tk.Canvas(main_window, width=499, height=1080)
+            im_root = ImageTk.PhotoImage(Image.open('./images/background.jpg').resize((499, 1080)))
+            canvas_root.create_image(249.5, 540, image=im_root)
+            canvas_root.pack()
+
+            # 添加本地对战按钮
+            button_local = Button(main_window, text='本地对战', font=('Microsoft YaHei', 16), width=20)
+            button_local.place(relx=0.5, rely=0.4, anchor=CENTER)
+
+            # 添加人机对战按钮
+            button_ai = Button(main_window, text='人机对战', font=('Microsoft YaHei', 16), width=20)
+            button_ai.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+            # 添加在线对战按钮
+            button_online = Button(main_window, text='在线对战', font=('Microsoft YaHei', 16), width=20)
+            button_online.place(relx=0.5, rely=0.6, anchor=CENTER)
+
+            # 添加游戏规则按钮
+            button_rule = Button(main_window, text='游戏规则', font=('Microsoft YaHei', 12), command=show_rule)
+            button_rule.place(x=10, y=10)
+
+            # 播放背景音乐
+            play_background_music()
+
+            main_window.mainloop()
+
+    else:
+        messagebox.showerror('登录失败', '用户名或密码错误！')
+
+
+def main():
+    global entry_username, entry_password, root_login
+    root_login = Tk()
+    root_login.geometry('499x1080+180+100')
+    root_login.resizable(False, False)
+
+    # 设置背景图片
+    canvas_root = tk.Canvas(root_login, width=499, height=1080)
+    im_root = ImageTk.PhotoImage(Image.open('./images/background.jpg').resize((499, 1080)))
+    canvas_root.create_image(249.5, 540, image=im_root)
+    canvas_root.pack()
+
+    # 添加账号输入框
+    entry_username_bg = get_img('./images/dhkbg.png', 200, 40)
+    entry_username_canvas = Canvas(canvas_root, width=200, height=40, highlightthickness=0)
+    entry_username_canvas.create_image(100, 20, image=entry_username_bg)
+    entry_username_canvas.place(x=180, y=380)
+    entry_username = Entry(entry_username_canvas, width=20, font=('Microsoft YaHei', 16), bg='#FFFFFF', bd=0)
+    entry_username.place(x=0, y=0)
+
+    # 添加密码输入框
+    entry_password_bg = get_img('./images/dhkbg.png', 200, 40)
+    entry_password_canvas = Canvas(canvas_root, width=200, height=40, highlightthickness=0)
+    entry_password_canvas.create_image(100, 20, image=entry_password_bg)
+    entry_password_canvas.place(x=100, y=500)
+    entry_password = Entry(entry_password_canvas, width=20, show='*', font=('Microsoft YaHei', 16), bg='#FFFFFF',
+                           bd=0)
+    entry_password.place(x=0, y=0)
+
+    # 添加用户名和密码标签
+    label_username_canvas = Canvas(canvas_root, width=80, height=40, highlightthickness=0)
+    label_username_canvas.place(x=100, y=330)
+    label_username = Label(label_username_canvas, text='账  号：', font=('Microsoft YaHei', 16), bg='#F5F5F5')
+    label_username.place(x=0, y=0)
+    label_password_canvas = Canvas(canvas_root, width=80, height=40, highlightthickness=0)
+    label_password_canvas.place(x=300, y=450)
+    label_password = Label(label_password_canvas, text='密  码：', font=('Microsoft YaHei', 16), bg='#F5F5F5')
+    label_password.place(x=0, y=0)
+
+    # 添加登录按钮
+    button_login_image = get_img('./images/denglu.jpg', 250, 100)
+    button_login = Button(root_login, text='登录', image=button_login_image,
+                          command=login, bd=0, highlightthickness=0)
+    button_login.place(x=120, y=600)
+
+    # 播放背景音乐
+    play_background_music()
+    root_login.mainloop()
+
+
+if __name__ == '__main__':
+    main()
+
