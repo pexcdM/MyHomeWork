@@ -1,0 +1,87 @@
+import random
+
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.score = 0
+
+    def roll_dice(self):
+        return random.randint(1, 6)
+
+    def update_score(self, points):
+        self.score += points
+
+    def get_score(self):
+        return self.score
+
+class Game:
+    def __init__(self, player_name):
+        self.player = Player(player_name)
+        self.computer = Player("Computer")
+        self.multiplier = 1
+
+    def is_double(self, rolls):
+        return len(set(rolls)) == 1
+
+    def is_triple(self, rolls):
+        return len(set(rolls)) == 1
+
+    def is_full_house(self, rolls):
+        return len(set(rolls)) == 2
+
+    def is_straight(self, rolls):
+        rolls.sort()
+        return rolls == [1, 2, 3, 4, 5] or rolls == [2, 3, 4, 5, 6]
+
+    def calculate_points(self, rolls):
+        points = 0
+
+        if self.is_double(rolls):
+            points += 10
+        if self.is_triple(rolls):
+            points += 10
+        if self.is_full_house(rolls):
+            points += 20
+        if len(set(rolls)) == 4:
+            points += 40
+        if len(set(rolls)) == 5:
+            points += 100
+        if self.is_straight(rolls):
+            points += 30
+        if self.is_straight(rolls) and len(set(rolls)) == 5:
+            points += 60
+
+        return points
+
+    def play(self):
+        while True:
+            input("请按enter键骰子")
+            player_roll = [self.player.roll_dice() for _ in range(5)]
+            computer_roll = [self.computer.roll_dice() for _ in range(5)]
+
+            print(f"{self.player.name} rolled: {player_roll}")
+            print(f"Computer rolled: {computer_roll}")
+
+            player_points = self.calculate_points(player_roll)
+            computer_points = self.calculate_points(computer_roll)
+
+            self.player.update_score(player_points)
+            self.computer.update_score(computer_points)
+
+            print(f"{self.player.name} got {player_points} points")
+            print(f"Computer got {computer_points} points")
+
+            print(f"Score: {self.player.name} - {self.player.get_score()}, Computer - {self.computer.get_score()}")
+
+            choice = input("Do you want to play again? (y/n): ")
+            if choice.lower() != 'y':
+                break
+
+        difference = abs(self.player.get_score() - self.computer.get_score())
+        total_multiplier = self.player.get_score() + self.computer.get_score()
+        chips = difference * total_multiplier
+        print(f"{self.player.name} wins {chips} chips from the opponent!")
+
+player_name = input("Enter your name: ")
+game = Game(player_name)
+game.play()
